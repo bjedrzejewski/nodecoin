@@ -1,0 +1,15 @@
+{
+  "name": "nodecoin",
+  "version": "1.0.0",
+  "description": "Training project for HTML5 in ScottLogic",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Bartosz Jedrzejewski",
+  "license": "ISC",
+  "dependencies": {
+    "http": "0.0.0"
+  }
+}
