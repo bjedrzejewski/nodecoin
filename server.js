@@ -15,7 +15,8 @@ process.argv.forEach(function (val, index, array) {
 });
 
 //bitcoinHash.merkleFunction('00000000000000000b9f55f5d0857f5655698e15996deb29bf56548268d45550', console.log);
-bitcoinHash.merkleFunction('000000000000000005b9a1de171f9c71416514b00342d496dd60451da46e9e12', console.log);
+var data = {input: '000000000000000005b9a1de171f9c71416514b00342d496dd60451da46e9e12'};
+bitcoinHash.merkleFunction(data, console.log);
 
 
 /*

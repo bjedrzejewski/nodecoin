@@ -6,6 +6,7 @@
 var reverseAndFlip = require('./reverseAndFlip.js');
 var bitcoinJSON = require('../bitcoin_lib/bitcoinJSON.js');
 var crypto = require('crypto');
+var rp = require('request-promise');
 var q = require('q');
 
 function hashTwice(headerHex) {
@@ -15,9 +16,14 @@ function hashTwice(headerHex) {
     return pass2;
 }
 
-function flipArray(arr){
+function getBitcoinJson(bitcoinId) {
+    return rp('https://blockexplorer.com/api/block/' + bitcoinId).then(JSON.parse);
+}
+
+
+function flipArray(arr) {
     var v = 0;
-    for (v=0; v<arr.length; ++v) {
+    for (v = 0; v < arr.length; ++v) {
         arr[v] = reverseAndFlip(arr[v]);
     }
 }
@@ -25,7 +31,7 @@ function flipArray(arr){
 var hashFunction = function (data, fnc) {
 
     var retrievalData = {};
-    retrievalData.coinId = data;
+    retrievalData.coinId = data.input;
 
 
     var hashFromJson = function (json) {
@@ -61,19 +67,23 @@ var hashFunction = function (data, fnc) {
             fnc();
     };
 
+    getBitcoinJson(retrievalData.coinId).then(function (json) {
+        hashFromJson(json);
 
-    bitcoinJSON(retrievalData).then(
-        function () {
-            hashFromJson(retrievalData.json);
-        }
-    );
+    });
+
+    /*bitcoinJSON(retrievalData).then(
+     function () {
+     hashFromJson(retrievalData.json);
+     }
+     );*/
 
 };
 
 var merkleFunction = function (data, fnc) {
 
     var retrievalData = {};
-    retrievalData.coinId = data;
+    retrievalData.coinId = data.input;
 
 
     var merkleFromJson = function (json) {
@@ -85,45 +95,30 @@ var merkleFunction = function (data, fnc) {
         var calcMerkle = 'this is a test';
         var len = tx.length;
         var i = 0;
-        while (i < len) {
+        //Iterate until merkle is calculated
+        while (true) {
             if (len === 1) {
                 calcMerkle = (tx[0]);
                 break;
             }
             var newHash;
+            //If odd number, extend the array
             if (i + 1 === len) {
-                console.log('hash: '+i+' and: '+i);
-                console.log('hash: '+tx[i]+' and: '+tx[i]);
-                newHash = hashTwice(reverseAndFlip(tx[i]) + reverseAndFlip(tx[i]));
-                console.log('result in: '+newHash);
-                console.log('save in: '+(i/2));
-                tx[i / 2] = newHash;
+                tx[i + 1] = tx[i];
                 len++;
-                len = (len / 2);
+            }
+            //Calculate new hash value
+            newHash = reverseAndFlip(hashTwice(reverseAndFlip(tx[i]) + reverseAndFlip(tx[i + 1])));
+            tx[i / 2] = newHash;
+            //If this is the end of the 'level' then prepare the array for the next pass
+            if (i + 2 === len) {
+                len = len / 2;
                 i = -2;
                 tx = tx.slice(0, len);
-                flipArray(tx);
-                //tx.sort();
-                //tx.reverse();
-            } else {
-                console.log('hash: '+i+' and: '+(i+1));
-                console.log('hash: '+tx[i]+' and: '+tx[i+1]);
-                newHash = hashTwice(reverseAndFlip(tx[i]) + reverseAndFlip(tx[i+1]));
-                console.log('result in: '+newHash);
-                console.log('save in: '+(i/2));
-                tx[i / 2] = newHash;
-                if (i + 2 === len) {
-                    len = len / 2;
-                    i = -2;
-                    tx = tx.slice(0, len);
-                    flipArray(tx);
-                    //tx.sort();
-                    //tx.reverse();
-                }
             }
+            //move the pointer
             i = i + 2;
         }
-
 
         console.log('Org merkle: ' + merkleroot);
         console.log('Calculated merkle: ' + calcMerkle);
@@ -132,12 +127,17 @@ var merkleFunction = function (data, fnc) {
             fnc();
     };
 
+    getBitcoinJson(retrievalData.coinId).then(function (json) {
+        merkleFromJson(json);
 
-    bitcoinJSON(retrievalData).then(
-        function () {
-            merkleFromJson(retrievalData.json);
-        }
-    );
+    });
+
+
+    /*bitcoinJSON(retrievalData).then(
+     function () {
+     merkleFromJson(retrievalData.json);
+     }
+     );*/
 
 };
 
